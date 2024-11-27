@@ -76,7 +76,7 @@ All parameters are optional (defaults to current page, and all the rest of the p
 		- "George" is an alias to my brother, but I don't want that match the tasks having to do with "George Clooney", so I tag the George Clooney tasks with a tag for that project #project/MyBigMovie, and it will no longer show up in my brother's tasklist because he has a different tag (e.g. #family/brother). 
 	- In other words, if a task has been found which matches a non-tag alias (simple words) of thePage, it will be ignored if it contains a tag that isn't thePage's tag. 
 - `includeSection`: if true, will group tasks by section, as well as file 
-- `summary`: if true, show "From <x>: 25 tasks" or "No available tasks." summary line (e.g. turn off (set to false) when doing concatenating task lists from various files)
+- `summary`: if true, show "From (Page): 25 tasks" or "No available tasks." summary line (e.g. turn off (set to false) when doing concatenating task lists from various files)
 
 In the code itself, you can customize `avoidFolders` to hide tasks in notes from particular folders.
 
