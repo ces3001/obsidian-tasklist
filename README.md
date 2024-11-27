@@ -11,11 +11,12 @@ A note can represent an entire project (or person, or anything), which can have 
 - Not required, but highly recommended, [tasks](https://github.com/obsidian-tasks-group/obsidian-tasks) plug-in.
 - [meta-bind](https://github.com/mProjectsCode/obsidian-meta-bind-plugin) plugin required for easy toggle of “Include Tagged Pages”, but not necessary.
 ## Files
-- Copy `Tasks.md` into your vault.
-	- I suggest you *pin* it in the right-hand sidebar (and select *Reading View* mode).
 - Copy `tasklist.js` into your vault
 	- I suggest you put it in a folder named `scripts` or wherever you like.
 - If you want the right-hand sidebar render to be smaller, install `smaller_class.css` as an Obsidian *CSS snippet*.
+- Optional, but this is my preferred usage: Copy `Tasks.md` into your vault.
+	- And *pin* it in the right-hand sidebar (and select *Reading View* mode).
+ 	- This will then show the tasks related to the note in the main panel. 
 # Usage
 ## Simplest usage
 Include a `dataviewjs` code-block in the note like so, and it’ll show you the tasks associated with the current note.
