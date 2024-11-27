@@ -32,7 +32,7 @@ You must adhere to these conventions for this to work:
 - `aliases` within the note’s properties should be:
 	- first, the note's identifier tag. e.g. `#projects/myproject`
 	- second, any number of words that identify the note, e.g. `My Project`
-	- Frontmatter ("Properties") example: `aliases: ["#projects/myproject", "My Project", "other additional", "aliases ok"]`, where the first alias is the tag that identifies this project or person. (tag can also not be first, but that may break other thigns)
+	- Frontmatter ("Properties") example: `aliases: ["#projects/myproject", "My Project", "other additional", "aliases ok"]`, where the first alias is the tag that identifies this project or person. (tag can also not be first, but that may break other things)
 - Tasks from across the vault (in any note) containing any of the aliases will be included
 	- `- [ ] Call so-and-so #projects/myproject`
 	- `- [ ] Call so-and-so for My Project`
@@ -46,8 +46,8 @@ Optional frontmatter or inline fields `includeTasksFrom` and `excludeTasksWith`
     - syntax in frontmatter (note outer brackets and links in quotes): `includeTasksFrom: ["[[link1]]","[[link2]]"]`
     - syntax inline (note double `:`, and no outer brackets or quotes): `includeTasksFrom:: [[link1]],[[link2]]`
 - `excludeTasksWith <str>[,...]`
-    - syntax in frontmatter (note outer brackets): `includeTasksFrom: ["str1","str2"]`
-    - syntax inline (note double `:`, and no outer brackets): `includeTasksFrom:: "str1","str2"`
+    - syntax in frontmatter (note outer brackets): `excludeTasksWith: ["str1","str2"]`
+    - syntax inline (note double `:`, and no outer brackets): `excludeTasksWith:: "str1","str2"`
 - Notes with tag `#ignoretasks` will prevent any task on that page to be listed.
 - Notes with tag `#multiproject` will hide all its tasks, except those tagged with our tag.
 
