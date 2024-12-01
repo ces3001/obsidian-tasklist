@@ -1,5 +1,5 @@
 # Tasklist
-Show all tasks for a note and any associated links elsewhere in vault. 
+Show all tasks for a note and any associated tasks elsewhere in vault. 
 A note can represent an entire project (or person, or anything), which can have tasks in other pages, subnotes, or subprojects.
 
 ## What you get
