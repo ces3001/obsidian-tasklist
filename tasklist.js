@@ -1,12 +1,12 @@
-const ver = "1.0.10"
+const ver = "1.0.11"
 // Documentation: https://github.com/ces3001/tasklist/blob/main/README.md
 // to include in pages (simplest): 
 // ```dataviewjs
-// await dv.view("scripts/tasklist");
+// await dv.view("tasklist");
 // ```
 // to include in pages (with all options, all optional):
 // ```dataviewjs
-// await dv.view("scripts/tasklist", {thePage: "Optional page name", tasksFromThisPage:true, taggedTasksFromAnywhere:true, tasksFromTaggedPages:true, tasksFromIncludedPages:true, ifTaskTaggedThenOnlyIfOurTag:true, includeSection:true, summary:true});
+// await dv.view("tasklist", {thePage: "Optional page name", tasksFromThisPage:true, taggedTasksFromAnywhere:true, tasksFromTaggedPages:true, tasksFromIncludedPages:true, ifTaskTaggedThenOnlyIfOurTag:true, includeSection:true, summary:true});
 // ```
 
 // defaults
@@ -55,8 +55,11 @@ try{
 			myAliases = Array(thisPage.aliases) 
 		}
 		for (let i = 0; i < myAliases.length; i++) {
-			if (myAliases[i].startsWith("#")) {
-				myTag = myAliases[i];
+			if (myAliases[i] == null) {
+				dv.paragraph("One of the aliases is *null*, please check to make sure tags are in quotes in the `aliases:` property.")
+			}
+			if (String(myAliases[i]).startsWith("#")) {
+				myTag = String(myAliases[i]);
 				break;
 			}
 		}
@@ -82,11 +85,13 @@ let taskList = dv.array([])
 
 // Tasks from this page
 if (tasksFromThisPage && !thisPage.file.etags.includes("#ignoretasks")) { 
-try{ // in a try loop in case no tasks.
-  taskList = taskList.concat( 
-	thisPage.file.tasks.where(t => !t.completed &&
-		dv.date(t.start) <= dv.date('today')))}
-finally{}
+	try { // in a try loop in case no tasks.
+	  tasksToAdd = thisPage.file.tasks
+		.where(t => !t.completed &&
+			dv.date(t.start) <= dv.date('today'))
+	  taskList = taskList.concat(tasksToAdd)
+	}
+	finally {}
 }
 
 // tasks from other pages listed in `includeTasksFrom`
