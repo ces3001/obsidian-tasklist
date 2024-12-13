@@ -1,4 +1,4 @@
-const ver = "1.0.11"
+const ver = "1.0.11c"
 // Documentation: https://github.com/ces3001/tasklist/blob/main/README.md
 // to include in pages (simplest): 
 // ```dataviewjs
@@ -37,7 +37,7 @@ if (typeof input !== "undefined") {
 			dv.span(`**ERROR** No page ${input.thePage}`);
 			return 
 		}
-		if (summary) { dv.span("From " + thisPage.file.link + " " + 
+		if (summary) { dv.header(2,"From " + thisPage.file.link + " " + 
 						(tasksFromTaggedPages?"plus tagged":"") + ": \n") } 
 	}
 }
@@ -46,7 +46,7 @@ if (debug) { dv.span(">[!DEBUG]\n") }
 
 // Initialize myAliases and myTag
 let myAliases = []
-let myTag = ""
+let myTag = null
 try{ 
 	if (thisPage.aliases) {
 		if (Array.isArray(thisPage.aliases)) {
@@ -67,14 +67,14 @@ try{
 } catch(e) { 
 	if (debug) { dv.span(`Error caught ok. No aliases. ${e}`) }
 	myAliases = []
-	myTag = ""
+	myTag = null
 }
 
 // Add note name as an alias
 if (!myAliases.includes(thisPage.file.name)) {
     myAliases.push(thisPage.file.name); 
 }
-if (debug) { dv.span("> myAliases:" + myAliases + " myTag:" + myTag + "\n") }
+if (debug) { dv.span("> myAliases:" + myAliases + " myTag: " + myTag + "\n") }
 
 function isWordInString(word, str) {
   const pattern = new RegExp(`(^|\\s|[\\p{P}])${word}(\\s|[\\p{P}]|$)`, 'ui');
@@ -117,7 +117,7 @@ if (taggedTasksFromAnywhere && myAliases) {
 		.file.tasks.where(t => {
 			if (t.completed || dv.date(t.start) > dv.date('today')) {
 				return false; }
-			if (ifTaskTaggedThenOnlyIfOurTag && t.text.includes('#') && myTag != "") { 
+			if (ifTaskTaggedThenOnlyIfOurTag && t.text.includes('#') && myTag != null) { 
 				// if it has a tag, only include this task if it has "our" tag, not tasks tagged with some other tag, even if it may match another non-tag alias of thePage.
 				return t.text.toLowerCase().includes(myTag.toLowerCase());
 			} else {
@@ -128,7 +128,7 @@ if (taggedTasksFromAnywhere && myAliases) {
 }
 
 // tasks from any page which contains this tag, except if tagged #multiproject or #ignoretasks
-if (tasksFromTaggedPages && myTag != "") {  
+if (tasksFromTaggedPages && myTag != null) {  
   taskList = taskList.concat( 
 	dv.pages(myTag + " and (-#multiproject and -#ignoretasks)")
 		.where(p => (tasksFromThisPage || (p.file.name != thisPage.file.name))) 
@@ -138,18 +138,20 @@ if (tasksFromTaggedPages && myTag != "") {
 				dv.date(t.start) <= dv.date('today')))}
 
 // Remove those in the exclude list, unless it includes myTag
+if (debug) { dv.span("Exclude: " + thisPage.excludeTasksWith) }
 if (thisPage.excludeTasksWith) {
 	excludeTasksWith = dv.array(thisPage.excludeTasksWith)
 	if (excludeTasksWith.length > 0) {
 	// Loop through objects and remove elements where their .text attribute contains any of the strings to exclude, unless it includes myTag
 		taskList = taskList.filter(t => {
-			if (!t.text.toLowerCase().includes(myTag.toLowerCase())) {
-				for (let i = 0; i < excludeTasksWith.length; i++) {
-					if (t.text.toLowerCase().includes(excludeTasksWith[i].toLowerCase())) {
-						return false;
-					}
+			for (let i = 0; i < excludeTasksWith.length; i++) {
+				if (t.text.toLowerCase().includes(excludeTasksWith[i].toLowerCase())) { // we found exclusion string, return false
+					let myTagPresent = ((myTag != null) && (t.text.toLowerCase().includes(myTag.toLowerCase())));  // exclude (return false) depending on presence of myTag (present = true = don't exclude)
+					if (debug) { dv.paragraph(t.text + (myTagPresent?" -> exclusion candidate ("+excludeTasksWith[i]+") but included because myTag present":" -> excluded due to ("+excludeTasksWith[i]+") and myTag NOT present.")) }
+					return myTagPresent;
 				}
 			}
+			if (debug) { dv.paragraph(t.text + " included.") }
 			return true;
 		});
 	}
@@ -182,8 +184,8 @@ if (taskList.length > 0) {
 			    ((page != t.path) || (section != t.section.toString()))) {
 				dv.taskList(sectionTaskList,false) // false = don't group by file
 			}
-			if (page != t.path) {
-				dv.header(base_header_num,dv.page(t.path).file.name)
+			if (page != t.path) { // new page
+				dv.header(base_header_num,dv.page(t.path).file.name + (dv.page(t.path).file.name==thisPage.file.name?" (this page)":""))
 				page = t.path
 			}
 			if (section != t.section.toString()) {
