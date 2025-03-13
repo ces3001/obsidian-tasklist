@@ -1,0 +1,10 @@
+# Documentation files
+tasklist Process Documentation.md
+
+# Button script
+tasklist_button.js
+
+# Common files to ignore
+.DS_Store
+Thumbs.db
+*.log
