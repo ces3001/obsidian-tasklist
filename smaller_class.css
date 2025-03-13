@@ -1,0 +1,80 @@
+--font-smaller: var(--font-small);
+
+.smaller {
+	font-size: var(--font-smaller) !important;
+	line-height: 1 !important;
+
+}
+
+.mod-right-split {
+
+	.smaller-right {
+	
+		/* This is for fun - add a random background */
+/* 		http://picsum.photos/1024/200 for banners */
+/* 	    background-image: url('https://random.imagecdn.app/500/1280'); */
+/* 
+	    background-image: url('https://fastly.picsum.photos/id/1037/500/1080.jpg?hmac=7qHWpNaalchIcehf-ohkxbxYNr-y1Wjhfm1Dwu19qKU');
+ */
+/* 
+	    background-image: url('https://fastly.picsum.photos/id/871/500/1280.jpg?hmac=cvyclrYIoKYY_-nmvWuHUtpXkS32YG1iNu99RAbp7zw');
+ */
+/* 
+		background-image: url('https://fastly.picsum.photos/id/481/500/1280.jpg?hmac=67oT4aEwy0KRRjdyctWE4m5Zkkq3YluDOuipjQ8h-U4');
+ */		
+
+/*		background-image: url('https://sothebys-md.brightspotcdn.com/6f/18/c6cba2b44e35aa3b5f7bd9518319/020n10749-bpy32-03.jpg');
+*/
+		background-color: #000044;
+
+	    background-position: top center;
+    	background-repeat: no-repeat;
+    	background-size: cover;
+    	.theme-dark .block-language-dataviewjs.node-insert-event {
+	    	backdrop-filter: blur(5px); 	
+    	}
+    	
+		font-size: var(--font-smaller) !important;
+		--table-text-size: var(--font-smaller);
+		--embed-font-style: 
+		--sidebar-markdown-font-size: calc(var(--font-smaller) * 0.9);
+		margin-top: 5px;
+		--list-indent: 1em;
+		padding: 5px !important;
+	}
+	
+	.smaller-right .markdown-preview-view {
+		font-size: var(--font-smaller) !important;	
+	}
+	
+	.smaller-right .metadata-container {
+		display: none !important; 
+	}
+	
+	.smaller-right .dataview.result-group {
+		padding-left: 20px;
+	}
+	
+	.dataview.task-list-item, .dataview.task-list-basic-item {
+		padding-left: 20px;
+	}
+	
+	.smaller .markdown-rendered {
+		margin-block-start: 0px;
+	}
+	
+	.smaller-right input[type=checkbox] {
+		width: 	var(--font-smaller);
+		height: var(--font-smaller);
+	}
+	
+	.smaller-right .mod-right-split {
+		font-size: var(--font-smaller) !important;	
+	}
+
+	.markdown-rendered ul, .smaller .markdown-rendered ol {
+		padding-inline-start: 0px !important;
+	}
+	
+
+}
