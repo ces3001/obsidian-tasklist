@@ -1,4 +1,4 @@
-const ver = "1.2"
+const ver = "1.4b"
 // Documentation: https://github.com/ces3001/tasklist/blob/main/README_tasklist.md
 // to include in pages (simplest): 
 // ```dataviewjs
@@ -6,22 +6,24 @@ const ver = "1.2"
 // ```
 // to include in pages (with all options, all optional):
 // ```dataviewjs
-// await dv.view("tasklist", {thePage: "Optional page name", tasksFromThisPage:true, taggedTasksFromAnywhere:true, tasksFromTaggedPages:true, tasksFromIncludedPages:true, ifTaskTaggedThenOnlyIfOurTag:true, includeSection:true, summary:true});
+// await dv.view("tasklist", {thePage: "Optional page name", tasksFromThisPage:true, taggedTasksFromAnywhere:true, tasksFromTaggedPages:true, tasksFromIncludedPages:true, tasksFromChildrenPages:true, ifTaskTaggedThenOnlyIfOurTag:true, includeSection:true, summary:true});
 // ```
 
 // defaults
-let debug = false
-let thisPage = await dv.current()
-let tasksFromThisPage = true
-let taggedTasksFromAnywhere = true
-let tasksFromTaggedPages = true
-let tasksFromIncludedPages = true 
-let tasksFromLinkedPages = false
-let ifTaskTaggedThenOnlyIfOurTag = true
-let avoidFolders = ["templates","Health"] // default list of folders to avoid looking for tasks
-let excludeTasksWith = "" // string that prevents a task from being included 
-let includeSection = true
-let summary = true
+let debug = false;
+let thisPage = await dv.current();
+let tasksFromThisPage = true;
+let taggedTasksFromAnywhere = true;
+let tasksFromTaggedPages = true;
+let tasksFromIncludedPages = true; 
+let tasksFromChildrenPages = true;
+let tasksFromLinkedPages = false;
+let ifTaskTaggedThenOnlyIfOurTag = true;
+let avoidFolders = ["templates","Health"]; // default list of folders to avoid looking for tasks
+let excludeTasksWith = thisPage.excludeTasksWith || []; // list of strings that prevents a task from being included 
+let excludeTasksFrom = thisPage.excludeTasksFrom || [];
+let includeSection = true; // in the output, include section where the task lives
+let summary = true;
 // override any defaults from parameters passed
 if (typeof input !== "undefined") {
 	if (typeof input.summary !== "undefined") { summary = input.summary }
@@ -30,9 +32,12 @@ if (typeof input !== "undefined") {
 	if (typeof input.taggedTasksFromAnywhere !== "undefined") { taggedTasksFromAnywhere = input.taggedTasksFromAnywhere }
 	if (typeof input.tasksFromTaggedPages !== "undefined") { tasksFromTaggedPages = input.tasksFromTaggedPages }
 	if (typeof input.tasksFromIncludedPages !== "undefined") { tasksFromIncludedPages = input.tasksFromIncludedPages }
+	if (typeof input.tasksFromChildrenPages !== "undefined") { tasksFromChildrenPages = input.tasksFromChildrenPages }
 	if (typeof input.tasksFromLinkedPages !== "undefined") { tasksFromLinkedPages = input.tasksFromLinkedPages }
 	if (typeof input.ifTaskTaggedThenOnlyIfOurTag !== "undefined") { ifTaskTaggedThenOnlyIfOurTag = input.ifTaskTaggedThenOnlyIfOurTag }
 	if (typeof input.avoidFolders !== "undefined") { avoidFolders = input.avoidFolders }
+	if (typeof input.excludeTasksWith !== "undefined") { excludeTasksWith = input.excludeTasksWith }
+	if (typeof input.excludeTasksFrom !== "undefined") { excludeTasksFrom = input.excludeTasksFrom }	
 	if (typeof input.includeSection !== "undefined") { includeSection = input.includeSection }
 	if (typeof input.thePage !== "undefined") { 
 		thisPage = dv.page(input.thePage)
@@ -84,6 +89,33 @@ function isWordInString(word, str) {
   return pattern.test(str);
 }
 
+// Function to extract task ID from text (format: 🆔 jyqcuu or 🆔jyqcuu)
+function getTaskId(task) {
+	const match = task.text.match(/🆔\s*([a-zA-Z0-9]{6})/);
+	return match ? match[1] : null;
+}
+
+// Function to extract blocked task ID from text (format: ⛔ s1d3dn or ⛔s1d3dn)
+function getBlockedById(task) {
+	const match = task.text.match(/⛔\s*([a-zA-Z0-9]{6})/);
+	return match ? match[1] : null;
+}
+
+// Function to check if a task is blocked by incomplete tasks
+function isTaskBlocked(task, incompleteTaskList) {
+	const blockedById = getBlockedById(task);
+	if (!blockedById) return false; // Not blocked if no ⛔ indicator
+	
+	// Check if the blocking task ID exists in the incomplete task list
+	for (let itask of incompleteTaskList) {
+		let itaskId = getTaskId(itask);
+		if (itaskId === blockedById) {
+			return true; // Blocked because dependency is still incomplete
+		}
+	}
+	return false; // Not blocked - dependency either completed or doesn't exist
+}
+
 let taskList = dv.array([])
 
 // Tasks from this page
@@ -100,6 +132,21 @@ if (tasksFromThisPage && !thisPage.file.etags.includes("#ignoretasks")) {
 // tasks from other pages listed in `includeTasksFrom`
 if (tasksFromIncludedPages && thisPage.includeTasksFrom) {
 	for (let page of dv.array(thisPage.includeTasksFrom)) {
+		let includeFile = dv.page(String(page).replace(/[\[\]]/g,"").replace(/\|(.+)/g,""))
+		if (typeof(includeFile) !== "undefined") {
+			if (!includeFile.file.etags.includes("#ignoretasks")) {
+				taskList = taskList.concat(includeFile
+					.file.tasks.where(t => !t.completed && dv.date(t.start) <= dv.date('today')));
+			}
+		} else {
+			if (debug) { dv.span("<br>(Cannot include from '" + page + "', as it is not a file.)") }
+		}
+	}
+}
+
+// tasks from children pages (pages that have this page in their children property)
+if (tasksFromChildrenPages && thisPage.children) {
+	for (let page of dv.array(thisPage.children)) {
 		let includeFile = dv.page(String(page).replace(/[\[\]]/g,"").replace(/\|(.+)/g,""))
 		if (typeof(includeFile) !== "undefined") {
 			if (!includeFile.file.etags.includes("#ignoretasks")) {
@@ -134,7 +181,7 @@ if (tasksFromLinkedPages) {
 if (taggedTasksFromAnywhere && myAliases) {
 	taskList = taskList.concat(  
 		dv.pages("-#ignoretasks") // ignore pages with #ignoretasks
-		.where(p => (tasksFromThisPage || (p.file.name != thisPage.file.name))) 
+		.where(p => (p.file.path != thisPage.file.path)) 
 		.file.tasks.where(t => {
 			if (t.completed || dv.date(t.start) > dv.date('today')) {
 				return false; }
@@ -152,7 +199,7 @@ if (taggedTasksFromAnywhere && myAliases) {
 if (tasksFromTaggedPages && myTag != null) {  
   taskList = taskList.concat( 
 	dv.pages(myTag + " and (-#multiproject and -#ignoretasks)")
-		.where(p => (tasksFromThisPage || (p.file.name != thisPage.file.name))) 
+		.where(p => (p.file.path != thisPage.file.path))
 		//.sort(p => p.file.mtime, "desc")
 		.file.tasks
 			.where(t => !t.completed &&
@@ -160,8 +207,7 @@ if (tasksFromTaggedPages && myTag != null) {
 
 // Remove those with any part in list of strings to exclude, unless it includes myTag
 if (debug) { dv.span("Exclude: " + thisPage.excludeTasksWith) }
-if (thisPage.excludeTasksWith) {
-	excludeTasksWith = dv.array(thisPage.excludeTasksWith)
+if (excludeTasksWith) {
 	if (excludeTasksWith.length > 0) {
 	// Loop through objects and remove elements where their .text attribute contains any of the strings to exclude, unless it includes myTag
 		taskList = taskList.filter(t => {
@@ -180,7 +226,7 @@ if (thisPage.excludeTasksWith) {
 }
 
 // Remove those from the list of excludeTasksFrom pages, unless it includes myTag
-if (thisPage.excludeTasksFrom) {
+if (excludeTasksFrom) {
     taskList = taskList.filter(t => {
         // Keep task if it has myTag
         let myTagPresent = ((myTag != null) && (t.text.toLowerCase().includes(myTag.toLowerCase())));
@@ -198,9 +244,15 @@ if (thisPage.excludeTasksFrom) {
     });
 }
 
+// Filter out blocked tasks
+if (taskList.length > 0) {
+	taskList = taskList.filter(t => !isTaskBlocked(t, taskList))
+}
+
 // OUTPUT
 let base_header_num = 2
 // print them out, make sure no dups, and sort by appearance in note
+let count = 0;
 if (taskList.length > 0) {
 	// use the earliest line number as a sorting algorithm, since I generally use reverse chronological order in my notes.
 	// And override with Priority indicators from Tasks plug-in (no field is associated with these in dataview, so must check text string)
@@ -210,9 +262,9 @@ if (taskList.length > 0) {
 	taskList = taskList
 		.distinct(t => t)
 		.sort(t => t.line)
-		.sort(t => t.path)
 		.sort(t => t.text.contains("🔺")?0:t.text.contains("⏫")?1:t.text.contains("🔼")?2:t.text.contains("🔽")?4:t.text.contains("⏬")?5:3) 
-		.sort(t => -dv.page(t.path)?.file.mday);
+		.sort(t => -dv.page(t.path)?.file.mday)
+		.sort(t => dv.page(t.path).file.name==thisPage.file.name?0:1);
 		
 	if (summary) { dv.span("*" + taskList.length + " tasks*\n") }
 	if (includeSection) {
@@ -222,14 +274,17 @@ if (taskList.length > 0) {
 		let sectionTaskList = []
 		for (let t of taskList) {
 			if ((sectionTaskList.length > 0) && 
-			    ((page != t.path) || (section != t.section.toString()))) {
+			    ((page != t.path.toString()) || (section != t.section.toString()))) { // 
+			    //dv.paragraph('Tasks thru #' + count)
 				dv.taskList(sectionTaskList,false) // false = don't group by file
 			}
-			if (page != t.path) { // new page
+			if (page != t.path.toString()) { // new page
 				dv.header(base_header_num,dv.page(t.path).file.name + (dv.page(t.path).file.name==thisPage.file.name?" (this page)":""))
-				page = t.path
+				page = t.path.toString()
+				sectionTaskList = []
 			}
-			if (section != t.section.toString()) {
+			if (section != t.section.toString()) { // new section
+				sectionTaskList = []
 				section = t.section.toString()
 				if (section.match(regex) != null) {
 					let sectionname = section.match(regex)[1]
@@ -243,9 +298,9 @@ if (taskList.length > 0) {
 				} else {
 					dv.header(base_header_num + 1, "No section")
 				}
-				sectionTaskList = []
 			}
-			sectionTaskList = sectionTaskList.concat(t)
+			sectionTaskList = sectionTaskList.concat(t);
+			count += 1;
 		}
 		dv.taskList(sectionTaskList,false)
 	} else {
